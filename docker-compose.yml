@@ -14,6 +14,8 @@ services:
     irods-catalog-provider:
         build:
             context: irods_catalog_provider
+        volumes:
+            - volume_for_ingest:/wormhole
         depends_on:
             - irods-catalog
 
@@ -86,3 +88,37 @@ services:
             - "/etc/passwd:/etc/passwd:ro"
         depends_on:
             - irods-catalog-provider
+
+    ingest-redis:
+        image: redis
+
+    ingest-worker:
+        build:
+            context: ingest
+        environment:
+            IRODS_HOST: irods-catalog-provider
+            IRODS_PORT: 1247
+            IRODS_USER_NAME: rods
+            IRODS_ZONE_NAME: tempZone
+            IRODS_PASSWORD: rods
+            CELERY_BROKER_URL: redis://ingest-redis:6379/0
+        volumes:
+            - volume_for_ingest:/wormhole:ro
+        depends_on:
+            - ingest-redis
+            - irods-catalog-provider
+        command: -c 2
+
+    ingest-cli:
+        build:
+            context: ingest
+            dockerfile: cli.Dockerfile
+        environment:
+            CELERY_BROKER_URL: redis://ingest-redis:6379/0
+        volumes:
+            - volume_for_ingest:/wormhole:ro
+        depends_on:
+            - ingest-worker
+
+volumes:
+    volume_for_ingest:
