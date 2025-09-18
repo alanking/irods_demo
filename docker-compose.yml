@@ -143,3 +143,38 @@ services:
           MINIO_ROOT_PASSWORD: irodsadmin
           MINIO_ADDRESS: ":19000"
           MINIO_CONSOLE_ADDRESS: ":19001"
+
+    sql-exporter:
+      image: burningalchemist/sql_exporter:latest
+      ports:
+        - "9399:9399"
+      volumes:
+        - ./sql_exporter/sql_exporter.yml:/sql_exporter.yml
+      command:
+        - --config.file=/sql_exporter.yml
+      depends_on:
+        - irods-catalog
+
+    prometheus:
+      image: prom/prometheus:latest
+      ports:
+        - "9090:9090"
+      volumes:
+        - ./prometheus/prometheus.yml:/prometheus.yml
+      command:
+        - --config.file=/prometheus.yml
+      depends_on:
+        - sql-exporter
+
+    grafana:
+      image: grafana/grafana:latest
+      ports:
+        - "3000:3000"
+      volumes:
+#        - grafana_data:/var/lib/grafana
+        - ./grafana/provisioning:/etc/grafana/provisioning
+      environment:
+        - GF_SECURITY_ADMIN_USER=admin
+        - GF_SECURITY_ADMIN_PASSWORD=admin
+      depends_on:
+        - prometheus

@@ -2,17 +2,20 @@ digraph G {
 
   rankdir="BT"
 
-  catalog    [label = "irods-catalog"];
-  provider   [label = "irods-catalog-provider"];
-  consumer   [label = "irods-catalog-consumer"];
-  http       [label = "irods-client-http-api"];
-  icommands  [label = "irods-client-icommands"];
-  nfsrods    [label = "irods-client-nfsrods"];
-  nginx      [label = "nginx-reverse-proxy"];
-  s3         [label = "irods-client-s3-api"];
-  zmt        [label = "irods-client-zmt"];
-  metalnx    [label = "metalnx"];
-  minio      [label = "minio"];
+  catalog        [label = "irods-catalog"];
+  provider       [label = "irods-catalog-provider"];
+  consumer       [label = "irods-catalog-consumer"];
+  http           [label = "irods-client-http-api"];
+  icommands      [label = "irods-client-icommands"];
+  nfsrods        [label = "irods-client-nfsrods"];
+  nginx          [label = "nginx-reverse-proxy"];
+  s3             [label = "irods-client-s3-api"];
+  zmt            [label = "irods-client-zmt"];
+  metalnx        [label = "metalnx"];
+  minio          [label = "minio"];
+  sql_exporter   [label = "sql-exporter"];
+  prometheus     [label = "prometheus"];
+  grafana        [label = "grafana"];
 
   provider -> catalog;
   consumer -> provider;
@@ -24,5 +27,8 @@ digraph G {
   s3 -> provider;
   nfsrods -> provider;
   provider -> minio;
+  sql_exporter -> catalog;
+  prometheus -> sql_exporter;
+  grafana -> prometheus;
 
 }

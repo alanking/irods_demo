@@ -1,0 +1,268 @@
+target:
+  data_source_name: postgresql://irods:testpassword@irods-catalog:5432/ICAT?sslmode=disable
+  collectors: [custom_metrics]
+
+collectors:
+  - collector_name: custom_metrics
+    metrics:
+      - metric_name: database_connection_count
+        type: gauge
+        help: 'Number of active connections to the database.'
+        values: [active_connections]
+        query: |
+          SELECT count(*) AS active_connections FROM pg_stat_activity
+
+      - metric_name: irods_users
+        type: gauge
+        help: 'Total Users'
+        values: [total]
+        query: |
+          SELECT COUNT(*) AS total FROM r_user_main u
+      - metric_name: irods_rodsusers
+        type: gauge
+        help: 'Total rodsusers'
+        values: [total]
+        query: |
+          SELECT COUNT(*) AS total
+          FROM r_user_main u
+          WHERE
+            u.user_type_name = 'rodsuser'
+      - metric_name: irods_rodsgroups
+        type: gauge
+        help: 'Total rodsgroups'
+        values: [total]
+        query: |
+          SELECT COUNT(*) AS total
+          FROM r_user_main u
+          WHERE
+            u.user_type_name = 'rodsgroup'
+      - metric_name: irods_groupadmins
+        type: gauge
+        help: 'Total groupadmins'
+        values: [total]
+        query: |
+          SELECT COUNT(*) AS total
+          FROM r_user_main u
+          WHERE
+            u.user_type_name = 'groupadmin'
+      - metric_name: irods_rodsadmins
+        type: gauge
+        help: 'Total rodsadmins'
+        values: [total]
+        query: |
+          SELECT COUNT(*) AS total
+          FROM r_user_main u
+          WHERE
+            u.user_type_name = 'rodsadmin'
+
+      - metric_name: irods_objects
+        type: gauge
+        help: 'Total Objects'
+        values: [total]
+        query: |
+          SELECT COUNT(DISTINCT data_id) AS total FROM r_data_main
+      - metric_name: irods_replicas
+        type: gauge
+        help: 'Total Replicas'
+        values: [total]
+        query: |
+          SELECT COUNT(data_id) AS total FROM r_data_main
+      - metric_name: irods_collections
+        type: gauge
+        help: 'Total Collections'
+        values: [total]
+        query: |
+          SELECT COUNT(coll_id) AS total FROM r_coll_main
+      - metric_name: irods_bytes
+        type: gauge
+        help: 'Total Bytes'
+        values: [total]
+        query: |
+          SELECT SUM(data_size) AS total FROM r_data_main
+
+      - metric_name: irods_objects_in_trash
+        type: gauge
+        help: 'Total Objects in Trash'
+        values: [total]
+        query: |
+          SELECT COUNT(DISTINCT d.data_id) AS total FROM r_data_main d, r_coll_main c
+          WHERE
+            d.coll_id = c.coll_id AND
+            c.coll_name like '%/trash/%'
+      - metric_name: irods_replicas_in_trash
+        type: gauge
+        help: 'Total Replicas in Trash'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total FROM r_data_main d, r_coll_main c
+          WHERE
+            d.coll_id = c.coll_id AND
+            c.coll_name like '%/trash/%'
+      - metric_name: irods_collections_in_trash
+        type: gauge
+        help: 'Total Collections in Trash'
+        values: [total]
+        query: |
+          SELECT COUNT(c.coll_id) AS total FROM r_coll_main c
+          WHERE
+            c.coll_name like '%/trash/%'
+      - metric_name: irods_bytes_in_trash
+        type: gauge
+        help: 'Total Bytes in Trash'
+        values: [total]
+        query: |
+          SELECT SUM(d.data_size) AS total FROM r_data_main d, r_coll_main c
+          WHERE
+            d.coll_id = c.coll_id AND
+            c.coll_name like '%/trash/%'
+
+      - metric_name: irods_objects_per_owner
+        type: gauge
+        help: 'Total Objects per Owner'
+        values: [total]
+        key_labels: [user_name]
+        query: |
+          SELECT CONCAT_WS('#', u.user_name, u.zone_name) AS user_name, COUNT(DISTINCT d.data_id) AS total
+          FROM r_data_main d, r_objt_access a, r_user_main u
+          WHERE
+            d.data_id = a.object_id AND
+            a.user_id = u.user_id AND
+            a.access_type_id = '1200'
+          GROUP BY
+            u.user_name, u.zone_name
+      - metric_name: irods_replicas_per_owner
+        type: gauge
+        help: 'Total Replicas per Owner'
+        values: [total]
+        key_labels: [user_name]
+        query: |
+          SELECT CONCAT_WS('#', u.user_name, u.zone_name) AS user_name, COUNT(d.data_id) AS total
+          FROM r_data_main d, r_objt_access a, r_user_main u
+          WHERE
+            d.data_id = a.object_id AND
+            a.user_id = u.user_id AND
+            a.access_type_id = '1200'
+          GROUP BY
+            u.user_name, u.zone_name
+      - metric_name: irods_collections_per_owner
+        type: gauge
+        help: 'Total Collections per Owner'
+        values: [total]
+        key_labels: [user_name]
+        query: |
+          SELECT CONCAT_WS('#', u.user_name, u.zone_name) AS user_name, COUNT(d.coll_id) AS total
+          FROM r_coll_main d, r_objt_access a, r_user_main u
+          WHERE
+            d.coll_id = a.object_id AND
+            a.user_id = u.user_id AND
+            a.access_type_id = '1200'
+          GROUP BY
+            u.user_name, u.zone_name
+      - metric_name: irods_bytes_per_owner
+        type: gauge
+        help: 'Total Bytes per Owner'
+        values: [total]
+        key_labels: [user_name]
+        query: |
+          SELECT CONCAT_WS('#', u.user_name, u.zone_name) AS user_name, SUM(d.data_size) AS total
+          FROM r_data_main d, r_objt_access a, r_user_main u
+          WHERE
+            d.data_id = a.object_id AND
+            a.user_id = u.user_id AND
+            a.access_type_id = '1200'
+          GROUP BY
+            u.user_name, u.zone_name
+
+      - metric_name: irods_replicas_per_resource
+        type: gauge
+        help: 'Total Replicas per Resource'
+        values: [total]
+        key_labels: [resc_name]
+        query: |
+          SELECT r.resc_name, COUNT(d.data_id) AS total
+          FROM r_data_main d, r_resc_main r
+          WHERE
+            d.resc_id = r.resc_id
+          GROUP BY
+            r.resc_name
+      - metric_name: irods_bytes_per_resource
+        type: gauge
+        help: 'Total Bytes per Resource'
+        values: [total]
+        key_labels: [resc_name]
+        query: |
+          SELECT r.resc_name, SUM(d.data_size) AS total
+          FROM r_data_main d, r_resc_main r
+          WHERE
+            d.resc_id = r.resc_id
+          GROUP BY
+            r.resc_name
+
+      - metric_name: irods_replicas_with_checksums
+        type: gauge
+        help: 'Total Replicas with Checksums'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total
+          FROM r_data_main d
+          WHERE
+            d.data_checksum IS NOT NULL AND
+            d.data_checksum <> ''
+      - metric_name: irods_replicas_without_checksums
+        type: gauge
+        help: 'Total Replicas without Checksums'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total
+          FROM r_data_main d
+          WHERE
+            d.data_checksum IS NULL OR
+            d.data_checksum = ''
+
+      - metric_name: irods_replicas_stale
+        type: gauge
+        help: 'Total Replicas - Stale'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total
+          FROM r_data_main d
+          WHERE
+            d.data_is_dirty = '0'
+      - metric_name: irods_replicas_good
+        type: gauge
+        help: 'Total Replicas - Good'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total
+          FROM r_data_main d
+          WHERE
+            d.data_is_dirty = '1'
+      - metric_name: irods_replicas_intermediate
+        type: gauge
+        help: 'Total Replicas - Intermediate'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total
+          FROM r_data_main d
+          WHERE
+            d.data_is_dirty = '2'
+      - metric_name: irods_replicas_locked
+        type: gauge
+        help: 'Total Replicas - Locked'
+        values: [total]
+        query: |
+          SELECT COUNT(d.data_id) AS total
+          FROM r_data_main d
+          WHERE
+            d.data_is_dirty >= '2'
+
+      - metric_name: irods_transfers_per_user
+        type: gauge
+        help: 'Transfers per User'
+        values: [total]
+        key_labels: [user_name, direction]
+        query: |
+          SELECT CONCAT_WS('#', u.user_name, u.zone_name) AS user_name, t.action AS direction, t.bytes AS total
+          FROM r_transfer_totals t, r_user_main u
+          WHERE
+            t.user_id = u.user_id

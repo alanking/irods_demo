@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090'] # Prometheus scrapes its own metrics
+  - job_name: 'irods'
+    static_configs:
+      - targets: ['sql-exporter:9399']
