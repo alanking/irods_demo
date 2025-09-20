@@ -34,6 +34,7 @@ ARG irods_package_version=${irods_version}${irods_package_version_suffix}
 
 RUN apt-get update && \
     apt-get install -y \
+        ed \
         irods-runtime=${irods_package_version} \
         irods-server=${irods_package_version} \
     && \
@@ -41,6 +42,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/*
 
 COPY unattended_install.json /
+COPY install_transfer_totals.sh /
 
 WORKDIR /
 COPY entrypoint.sh .

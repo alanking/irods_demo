@@ -19,6 +19,9 @@ if [ -e "${unattended_install_file}" ]; then
     python3 /var/lib/irods/scripts/setup_irods.py --json_configuration_file ${unattended_install_file}
     rm ${unattended_install_file}
 
+    echo "Installing transfer totals script"
+    su - irods -c 'bash /install_transfer_totals.sh'
+
     echo "Initializing server"
     su - irods -c 'irodsServer -d'
 

@@ -38,6 +38,7 @@ ARG irods_resource_plugin_version=5.0.1${irods_package_plugin_version_suffix}
 
 RUN apt-get update && \
     apt-get install -y \
+        ed \
         irods-database-plugin-postgres=${irods_package_version} \
         irods-runtime=${irods_package_version} \
         irods-server=${irods_package_version} \
@@ -49,6 +50,7 @@ RUN apt-get update && \
 
 COPY unattended_install.json /
 COPY s3.keypair /var/lib/irods/
+COPY install_transfer_totals.sh /
 
 WORKDIR /
 COPY entrypoint.sh .
